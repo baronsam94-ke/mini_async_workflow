@@ -1,15 +1,15 @@
 # worker.py — async worker pool
 import asyncio, json, uuid, logging
-from job_queue import JobQueue
+from job_queue import JobQueue, BRPOP_TIMEOUT
 from handlers import HANDLERS   # dict[str, coroutine fn]
 
 logger = logging.getLogger("worker")
 MAX_RETRIES = 3
 
 async def run_worker(worker_id: int, q: JobQueue):
-    logger.info(f"worker-{worker_id} started")
+    logger.info(f"worker-{worker_id} started (BRPOP_TIMEOUT={BRPOP_TIMEOUT}s)")
     while True:
-        raw = await q.pop(timeout=5)   # BRPOP, yields event loop
+        raw = await q.pop()   # uses BRPOP_TIMEOUT from config
         if not raw:
             continue
         job = json.loads(raw)
